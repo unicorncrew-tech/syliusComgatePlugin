@@ -29,7 +29,7 @@ final class NotifyActionTest extends TestCase
     public function testItRefreshesThePaymentStatusFromTheAuthoritativeApiCall(): void
     {
         $payment = new Payment();
-        $payment->setDetails(['status' => ComgateStatus::PENDING]);
+        $payment->setDetails(['status' => ComgateStatus::PENDING, 'trans_id' => 'XXXX-YYYY-ZZZZ']);
 
         $paymentRepository = $this->createMock(PaymentRepositoryInterface::class);
         $paymentRepository->expects(self::once())->method('find')->with(42)->willReturn($payment);
@@ -86,6 +86,47 @@ final class NotifyActionTest extends TestCase
         $action->setGateway($this->createNotifyWebhookGateway(['refId' => '999', 'transId' => 'XXXX-YYYY-ZZZZ']));
 
         $action->execute(new Notify(null));
+    }
+
+    public function testItIgnoresNotificationsWhereTheTransactionIdDoesNotMatchThePayment(): void
+    {
+        $payment = new Payment();
+        $payment->setDetails(['status' => ComgateStatus::PENDING, 'trans_id' => 'REAL-TRANS-ID']);
+
+        $paymentRepository = $this->createMock(PaymentRepositoryInterface::class);
+        $paymentRepository->expects(self::once())->method('find')->with(42)->willReturn($payment);
+
+        $api = $this->createMock(ComgateApiInterface::class);
+        $api->expects(self::never())->method('getStatus');
+
+        $action = new NotifyAction($paymentRepository);
+        $action->setApi($api);
+        $action->setGateway($this->createNotifyWebhookGateway(['refId' => '42', 'transId' => 'ATTACKER-TRANS-ID']));
+
+        $action->execute(new Notify(null));
+
+        self::assertSame(ComgateStatus::PENDING, $payment->getDetails()['status']);
+        self::assertSame('REAL-TRANS-ID', $payment->getDetails()['trans_id']);
+    }
+
+    public function testItIgnoresNotificationsForAPaymentThatHasNoTransactionIdYet(): void
+    {
+        $payment = new Payment();
+        $payment->setDetails(['status' => ComgateStatus::NEW]);
+
+        $paymentRepository = $this->createMock(PaymentRepositoryInterface::class);
+        $paymentRepository->expects(self::once())->method('find')->with(42)->willReturn($payment);
+
+        $api = $this->createMock(ComgateApiInterface::class);
+        $api->expects(self::never())->method('getStatus');
+
+        $action = new NotifyAction($paymentRepository);
+        $action->setApi($api);
+        $action->setGateway($this->createNotifyWebhookGateway(['refId' => '42', 'transId' => 'ATTACKER-TRANS-ID']));
+
+        $action->execute(new Notify(null));
+
+        self::assertSame(ComgateStatus::NEW, $payment->getDetails()['status']);
     }
 
     /** @param array<string, string> $requestParams */
