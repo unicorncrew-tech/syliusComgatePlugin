@@ -124,6 +124,25 @@ vendor/bin/ecs check src/ tests/
 No database is required to run the suite (`tests/TestApplication/.env` points `DATABASE_URL` at a local
 SQLite file); it's only needed for Behat/browser-level testing, which this plugin does not ship.
 
+## Releasing
+
+Commit messages MUST follow [Conventional Commits](https://www.conventionalcommits.org/) - this is what
+drives versioning and the changelog:
+
+- `feat: …` - new functionality, bumps the minor version (`1.2.0` -> `1.3.0`).
+- `fix: …` - bug fixes, bumps the patch version (`1.2.0` -> `1.2.1`).
+- `feat!: …` / a `BREAKING CHANGE:` footer - bumps the major version (`1.2.0` -> `2.0.0`).
+- `chore:`, `docs:`, `test:`, `ci:`, `refactor:`, `style:` - no release on their own; grouped in the
+  changelog instead of triggering a version bump.
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please): every push to
+`main` runs `.github/workflows/release-please.yaml`, which keeps a "Release PR" up to date with the next
+version (computed from the commits above) and the generated `CHANGELOG.md`. Merging that PR tags the
+release and publishes a GitHub Release; Packagist picks up new tags automatically once the repository is
+registered there.
+
+There is no `version` field to bump in `composer.json` - Packagist and Composer resolve versions from git
+tags, so nothing else needs to change by hand.
 
 ## Security
 
