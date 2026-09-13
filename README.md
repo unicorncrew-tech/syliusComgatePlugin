@@ -102,12 +102,28 @@ segment.
 
 ## Testing
 
+This plugin uses [`sylius/test-application`](https://github.com/Sylius/TestApplication) as a dev
+dependency instead of bundling its own throwaway Sylius app. `tests/Unit` runs in isolation (no
+framework needed); `tests/Functional` boots the real Sylius kernel — with this plugin enabled via
+`tests/TestApplication/bundles.php` and `tests/TestApplication/.env` — and asserts the container actually
+compiles: the `comgate` Payum gateway factory is registered, its actions resolve, and the admin gateway
+configuration form type is wired, i.e. everything `bin/console debug:container` would otherwise be used
+for.
+
 ```shell
 composer install
-vendor/bin/phpunit
+
+# Full test suite (unit + functional). Compiling the real Sylius container needs more than the
+# default CLI 128M memory_limit.
+php -d memory_limit=-1 vendor/bin/phpunit
+
 vendor/bin/phpstan analyse -c phpstan.neon.dist
 vendor/bin/ecs check src/ tests/
 ```
+
+No database is required to run the suite (`tests/TestApplication/.env` points `DATABASE_URL` at a local
+SQLite file); it's only needed for Behat/browser-level testing, which this plugin does not ship.
+
 
 ## Security
 

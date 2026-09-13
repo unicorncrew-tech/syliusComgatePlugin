@@ -28,7 +28,6 @@ services:
 
     unicorncrew_sylius_comgate.payum.action.notify:
         class: Unicorncrew\SyliusComgatePlugin\Payum\Action\NotifyAction
-        arguments:
-            - '@Sylius\Component\Core\Repository\PaymentRepositoryInterface'
+        autowire: true
         tags:
             - { name: payum.action, factory: comgate, alias: unicorncrew_sylius_comgate.notify }
