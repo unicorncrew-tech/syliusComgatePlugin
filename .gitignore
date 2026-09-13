@@ -6,3 +6,5 @@
 /composer.lock
 /.idea/
 /.vscode/
+/tests/TestApplication/.env.local
+/tests/TestApplication/.env.*.local

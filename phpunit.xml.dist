@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="vendor/sylius/test-application/config/bootstrap.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
 >
     <testsuites>
-        <testsuite name="Unicorncrew Sylius Comgate Plugin">
+        <testsuite name="Unicorncrew Sylius Comgate Plugin - Unit">
             <directory>tests/Unit</directory>
         </testsuite>
+        <testsuite name="Unicorncrew Sylius Comgate Plugin - Functional">
+            <directory>tests/Functional</directory>
+        </testsuite>
     </testsuites>
+
+    <php>
+        <ini name="error_reporting" value="-1" />
+        <env name="APP_ENV" value="test" />
+        <env name="SHELL_VERBOSITY" value="-1" />
+        <server name="KERNEL_CLASS" value="Sylius\TestApplication\Kernel" />
+    </php>
 
     <source>
         <include>

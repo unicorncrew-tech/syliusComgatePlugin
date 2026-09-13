@@ -23,7 +23,8 @@ jobs:
               uses: shivammathur/setup-php@v2
               with:
                   php-version: ${{ matrix.php }}
-                  extensions: curl, xml
+                  extensions: curl, xml, pdo_sqlite
+                  ini-values: memory_limit=-1
                   coverage: none
 
             - name: Get composer cache directory

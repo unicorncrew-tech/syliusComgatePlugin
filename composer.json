@@ -37,7 +37,9 @@
         "phpstan/phpstan-webmozart-assert": "^1.0",
         "phpunit/phpunit": "^10.5",
         "sylius-labs/coding-standard": "^4.0",
-        "symfony/phpunit-bridge": "^6.4 || ^7.0"
+        "sylius/test-application": "^2.0.0@alpha",
+        "symfony/phpunit-bridge": "^7.4",
+        "symfony/var-exporter": "^7.4"
     },
     "autoload": {
         "psr-4": {
@@ -55,13 +57,19 @@
         "sort-packages": true,
         "allow-plugins": {
             "phpstan/extension-installer": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "symfony/runtime": true,
+            "symfony/flex": true
         }
     },
     "extra": {
         "branch-alias": {
             "dev-main": "1.0-dev"
-        }
+        },
+        "symfony": {
+            "require": "^7.4"
+        },
+        "public-dir": "vendor/sylius/test-application/public"
     },
     "scripts": {
         "analyse": [
