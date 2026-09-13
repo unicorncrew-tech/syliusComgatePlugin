@@ -61,10 +61,20 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
             return;
         }
 
+        $details = $payment->getDetails();
+
+        // The webhook body is attacker-controlled and Comgate's status webhook
+        // carries no signature. Without this check, an attacker who knows (or
+        // enumerates) a victim's payment id could pair it with a transId from
+        // their own paid Comgate transaction and have it marked as completed.
+        // trans_id is written by CaptureAction before the shopper is ever
+        // redirected to Comgate, so a legitimate webhook always matches it.
+        if (!isset($details['trans_id']) || $details['trans_id'] !== $transactionId) {
+            return;
+        }
+
         $status = $this->api->getStatus($transactionId);
 
-        $details = $payment->getDetails();
-        $details['trans_id'] = $transactionId;
         $details['status'] = $status->getStatus();
         $payment->setDetails($details);
 
