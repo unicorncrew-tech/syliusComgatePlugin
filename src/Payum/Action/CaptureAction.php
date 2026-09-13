@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Unicorncrew\SyliusComgatePlugin\Payum\Action;
 
+use Comgate\SDK\Entity\Codes\CurrencyCode;
 use Comgate\SDK\Entity\Codes\PaymentMethodCode;
 use Comgate\SDK\Entity\Money;
 use Comgate\SDK\Entity\Payment as ComgatePayment;
@@ -55,13 +56,22 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface
             throw new LogicException('CaptureAction requires the payment to be attached to an order.');
         }
 
+        $currencyCode = (string) $payment->getCurrencyCode();
+        if (!\in_array($currencyCode, CurrencyCode::SELF, true)) {
+            throw new LogicException(\sprintf(
+                'Comgate does not support the "%s" currency. Supported currencies: %s.',
+                $currencyCode,
+                implode(', ', CurrencyCode::SELF),
+            ));
+        }
+
         $token = $request->getToken();
         $returnUrl = null !== $token ? $token->getTargetUrl() : null;
 
         $comgatePayment = new ComgatePayment();
         $comgatePayment
             ->setPrice(Money::ofCents((int) $payment->getAmount()))
-            ->setCurrency((string) $payment->getCurrencyCode())
+            ->setCurrency($currencyCode)
             ->setLabel((string) $order->getNumber())
             ->setReferenceId((string) $payment->getId())
             ->setEmail($order->getCustomer()?->getEmail() ?? '')
