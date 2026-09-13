@@ -1,0 +1,10 @@
+services:
+    _defaults:
+        public: false
+        autowire: true
+        autoconfigure: true
+
+    Unicorncrew\SyliusComgatePlugin\Form\Type\ComgateGatewayConfigurationType:
+        tags:
+            - { name: form.type }
+            - { name: sylius.gateway_configuration_type, type: comgate, label: unicorncrew_sylius_comgate.label }

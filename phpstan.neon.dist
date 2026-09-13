@@ -1,0 +1,14 @@
+parameters:
+    level: 8
+    treatPhpDocTypesAsCertain: false
+    paths:
+        - src
+    excludePaths:
+        - src/Migrations
+    ignoreErrors:
+        -
+            # Payum's ActionInterface::execute($request) is intentionally untyped (mixed) so that
+            # every gateway can narrow it to the concrete Request it handles via a @param docblock,
+            # exactly like Sylius' own core payment plugins (paypal-plugin, mollie-plugin) do.
+            message: '~^Parameter #1 \$request \([^)]+\) of method [^ ]+::execute\(\) should be contravariant with parameter \$request \(mixed\) of method Payum\\Core\\Action\\ActionInterface::execute\(\)$~'
+            path: src/Payum/Action/*.php

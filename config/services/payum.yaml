@@ -1,0 +1,34 @@
+services:
+    _defaults:
+        public: true
+        autowire: false
+        autoconfigure: false
+
+    unicorncrew_sylius_comgate.gateway_factory_builder:
+        class: Payum\Core\Bridge\Symfony\Builder\GatewayFactoryBuilder
+        arguments:
+            - 'Unicorncrew\SyliusComgatePlugin\Payum\ComgateGatewayFactory'
+        tags:
+            - { name: payum.gateway_factory_builder, factory: comgate }
+
+    unicorncrew_sylius_comgate.payum.action.convert_payment:
+        class: Unicorncrew\SyliusComgatePlugin\Payum\Action\ConvertPaymentAction
+        tags:
+            - { name: payum.action, factory: comgate, alias: unicorncrew_sylius_comgate.convert_payment }
+
+    unicorncrew_sylius_comgate.payum.action.status:
+        class: Unicorncrew\SyliusComgatePlugin\Payum\Action\StatusAction
+        tags:
+            - { name: payum.action, factory: comgate, alias: unicorncrew_sylius_comgate.status }
+
+    unicorncrew_sylius_comgate.payum.action.capture:
+        class: Unicorncrew\SyliusComgatePlugin\Payum\Action\CaptureAction
+        tags:
+            - { name: payum.action, factory: comgate, alias: unicorncrew_sylius_comgate.capture }
+
+    unicorncrew_sylius_comgate.payum.action.notify:
+        class: Unicorncrew\SyliusComgatePlugin\Payum\Action\NotifyAction
+        arguments:
+            - '@Sylius\Component\Core\Repository\PaymentRepositoryInterface'
+        tags:
+            - { name: payum.action, factory: comgate, alias: unicorncrew_sylius_comgate.notify }
