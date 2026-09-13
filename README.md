@@ -136,7 +136,7 @@ drives versioning and the changelog:
   changelog instead of triggering a version bump.
 
 Releases are automated with [release-please](https://github.com/googleapis/release-please): every push to
-`main` runs `.github/workflows/release-please.yaml`, which keeps a "Release PR" up to date with the next
+`master` runs `.github/workflows/release-please.yaml`, which keeps a "Release PR" up to date with the next
 version (computed from the commits above) and the generated `CHANGELOG.md`. Merging that PR tags the
 release and publishes a GitHub Release; Packagist picks up new tags automatically once the repository is
 registered there.
