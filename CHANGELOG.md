@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/unicorncrew-tech/syliusComgatePlugin/compare/v1.0.0...v1.0.1) (2026-09-13)
+
+
+### Bug Fixes
+
+* bind webhook transId to the looked-up payment ([#4](https://github.com/unicorncrew-tech/syliusComgatePlugin/issues/4)) ([50fc908](https://github.com/unicorncrew-tech/syliusComgatePlugin/commit/50fc908cd45466142d6b85906839777c8fafb97c))
+* **payum:** reject currencies Comgate's SDK doesn't support ([#6](https://github.com/unicorncrew-tech/syliusComgatePlugin/issues/6)) ([b8aa82a](https://github.com/unicorncrew-tech/syliusComgatePlugin/commit/b8aa82adb2c4f4959031224a2d73c71a67cd5ffb))
+
 ## [1.0.0](https://github.com/unicorncrew-tech/syliusComgatePlugin/compare/v1.0.0...v1.0.0) (2026-09-13)
 
 
