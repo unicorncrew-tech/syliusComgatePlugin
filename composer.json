@@ -1,0 +1,79 @@
+{
+    "name": "unicorncrew-tech/sylius-comgate-plugin",
+    "type": "sylius-plugin",
+    "description": "Comgate payment gateway integration for Sylius.",
+    "keywords": [
+        "sylius",
+        "sylius-plugin",
+        "comgate",
+        "payment",
+        "payum"
+    ],
+    "homepage": "https://github.com/unicorncrew-tech/syliusComgatePlugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Unicorncrew",
+            "homepage": "https://github.com/unicorncrew-tech"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "comgate/sdk": "^1.7",
+        "payum/core": "^1.7",
+        "sylius/sylius": "^2.0",
+        "symfony/config": "^6.4 || ^7.0",
+        "symfony/dependency-injection": "^6.4 || ^7.0",
+        "symfony/form": "^6.4 || ^7.0",
+        "symfony/http-foundation": "^6.4 || ^7.0",
+        "symfony/http-kernel": "^6.4 || ^7.0",
+        "webmozart/assert": "^1.11"
+    },
+    "require-dev": {
+        "nyholm/psr7": "^1.8",
+        "phpstan/extension-installer": "^1.0",
+        "phpstan/phpstan": "^1.11",
+        "phpstan/phpstan-strict-rules": "^1.5",
+        "phpstan/phpstan-webmozart-assert": "^1.0",
+        "phpunit/phpunit": "^10.5",
+        "sylius-labs/coding-standard": "^4.0",
+        "symfony/phpunit-bridge": "^6.4 || ^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Unicorncrew\\SyliusComgatePlugin\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Unicorncrew\\SyliusComgatePlugin\\": "tests/"
+        }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev",
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0-dev"
+        }
+    },
+    "scripts": {
+        "analyse": [
+            "@composer validate --strict",
+            "vendor/bin/phpstan analyse -c phpstan.neon.dist",
+            "vendor/bin/ecs check src/ tests/"
+        ],
+        "fix": [
+            "vendor/bin/ecs check src/ tests/ --fix"
+        ],
+        "tests": [
+            "vendor/bin/phpunit"
+        ]
+    }
+}

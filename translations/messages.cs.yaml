@@ -1,0 +1,6 @@
+unicorncrew_sylius_comgate:
+    label: Comgate
+    form:
+        merchant: ID obchodu (Merchant)
+        secret: Tajný klíč (Secret)
+        test_mode: Testovací režim

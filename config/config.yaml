@@ -1,0 +1,19 @@
+# Payments stay in the "processing" state between the redirect to Comgate and
+# the webhook/return confirming the final outcome; the checkout must still be
+# able to complete (reach the thank you page) while that is happening.
+sylius_core:
+    checkout:
+        payment:
+            allowed_states:
+                - new
+                - cart
+                - processing
+
+monolog:
+    channels: ['comgate']
+    handlers:
+        comgate:
+            level: debug
+            type: stream
+            path: '%kernel.logs_dir%/comgate.log'
+            channels: ['comgate']

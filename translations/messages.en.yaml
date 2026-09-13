@@ -1,0 +1,6 @@
+unicorncrew_sylius_comgate:
+    label: Comgate
+    form:
+        merchant: Merchant ID
+        secret: Secret
+        test_mode: Test mode
