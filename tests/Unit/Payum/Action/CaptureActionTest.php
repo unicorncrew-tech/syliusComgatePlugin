@@ -81,6 +81,26 @@ final class CaptureActionTest extends TestCase
         self::assertSame(ComgateStatus::PENDING, $details['status']);
     }
 
+    public function testItRejectsAnUnsupportedCurrencyBeforeCallingComgate(): void
+    {
+        $payment = $this->createPayment(paymentId: 42, amount: 12345, currencyCode: 'JPY');
+
+        $api = $this->createMock(ComgateApiInterface::class);
+        $api->expects(self::never())->method('createPayment');
+
+        $action = new CaptureAction();
+        $action->setApi($api);
+
+        $request = new Capture(new Token());
+        $request->setModel($payment);
+        $request->setModel($payment->getDetails());
+
+        $this->expectException(\Payum\Core\Exception\LogicException::class);
+        $this->expectExceptionMessage('Comgate does not support the "JPY" currency.');
+
+        $action->execute($request);
+    }
+
     public function testOnReturnItRefreshesStatusFromComgateInsteadOfTrustingTheBrowser(): void
     {
         $payment = $this->createPayment(paymentId: 42, amount: 12345, currencyCode: 'CZK');
