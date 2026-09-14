@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/unicorncrew-tech/syliusComgatePlugin/compare/v1.0.1...v1.0.2) (2026-09-14)
+
+
+### Bug Fixes
+
+* pin github actions ([#7](https://github.com/unicorncrew-tech/syliusComgatePlugin/issues/7)) ([3812256](https://github.com/unicorncrew-tech/syliusComgatePlugin/commit/381225654c9213d154e42a7d32775e4c39c4e5b9))
+
 ## [1.0.1](https://github.com/unicorncrew-tech/syliusComgatePlugin/compare/v1.0.0...v1.0.1) (2026-09-13)
 
 
@@ -20,4 +27,3 @@
 
 * autowire NotifyAction's payment repository dependency ([3efb2e3](https://github.com/unicorncrew-tech/syliusComgatePlugin/commit/3efb2e35bc5712edec62d87a6ff671c728f779a8))
 * **ci:** drop package name prefix from release-please tags ([cab0a61](https://github.com/unicorncrew-tech/syliusComgatePlugin/commit/cab0a61adb5a59e30433a00e5319c23e390d18f7))
-
