@@ -37,7 +37,8 @@ The shared state store across every action is `Payment::$details` (an array pers
 `status` (one of `ComgateStatus::{NEW,PENDING,AUTHORIZED,PAID,CANCELLED}`) and `trans_id` (Comgate's
 transaction id — also the refId lookup key on the webhook side).
 
-No new Doctrine entities/migrations exist; the plugin only adds services, actions, and a form type.
+No new Doctrine entities/migrations exist; the plugin only adds services, actions, a form type, and the
+admin Twig templates/hooks that render that form type.
 
 ## Key Directories
 
@@ -54,11 +55,19 @@ No new Doctrine entities/migrations exist; the plugin only adds services, action
 - `config/services/` — `payum.yaml` (gateway factory builder + 4 tagged actions, manual wiring,
   `autowire: false` except `NotifyAction`) and `form.yaml` (form type, standard `autowire: true`).
 - `config/config.yaml` — **consumer-app-facing** config (imported by host apps, not just this plugin):
-  whitelists `processing` as an allowed checkout payment state and adds an isolated `comgate` Monolog
-  channel/handler.
+  imports `config/app/twig_hooks/**/*.yaml`, whitelists `processing` as an allowed checkout payment state
+  and adds an isolated `comgate` Monolog channel/handler.
+- `config/app/twig_hooks/admin/payment_method/{create,update}.yaml` — `sylius_twig_hooks` hookables on
+  `sylius_admin.payment_method.{create,update}.content.form.sections.gateway_configuration.comgate` (the
+  hook Sylius dispatches per `gatewayConfig.factoryName`). Without them the config fields are never
+  rendered and their `NotBlank` errors make the admin form fail with an invisible 422.
+- `templates/` — Twig namespace `@UnicorncrewSyliusComgatePlugin`;
+  `admin/payment_method/form/sections/gateway_configuration/{merchant,secret,test}.html.twig` render
+  `hookable_metadata.context.form.gatewayConfig.config.*` (pattern copied from `sylius/paypal-plugin`).
 - `translations/` — `messages.{en,cs}.yaml` for the gateway label + form field labels.
 - `tests/Unit/` — framework-free PHPUnit tests, one per class in `src/`.
-- `tests/Functional/` — a single container-compilation smoke test (see Testing & QA).
+- `tests/Functional/` — container-compilation smoke test + admin gateway configuration rendering test
+  (see Testing & QA).
 - `tests/TestApplication/` — overlay for the shared `sylius/test-application` dev-dependency kernel
   (`bundles.php`, `.env`, `.env.test`). Not a bespoke app.
 - No `scripts/` directory exists — every command is a raw `composer`/`vendor/bin/*` invocation.
@@ -168,6 +177,11 @@ per-command flag.
   registered *and actually buildable*, all four action services resolve, the form type is registered, and
   `comgate` appears in the `sylius.gateway_factories` parameter. No database is queried (SQLite path
   configured but unused).
+- **Admin form rendering test** (`tests/Functional/GatewayConfigurationFormRenderingTest.php`) builds a
+  root form with only the real `GatewayConfigType` child (no DB — the full `PaymentMethodType` needs
+  channels/locales), then renders Sylius' own `@SyliusAdmin/.../gateway_configuration.html.twig` with a
+  hand-built `HookableMetadata` (prefix `sylius_admin.payment_method.{create,update}.content.form.sections`)
+  and the admin form theme, and asserts the Comgate inputs, prefilled values and field-level errors.
 - **Compiling the real Sylius container needs more than PHP's default 128M CLI `memory_limit`** — always
   run the full suite as `php -d memory_limit=-1 vendor/bin/phpunit`, or scope to
   `--testsuite "Unicorncrew Sylius Comgate Plugin - Unit"` if you don't need the container boot.
