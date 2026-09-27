@@ -94,10 +94,11 @@ admin Twig templates/hooks that render that form type.
 - `translations/` — `messages.{en,cs}.yaml` for the gateway label + form field labels, `flashes.{en,cs}.yaml`
   for the refund failure flash.
 - `tests/Unit/` — framework-free PHPUnit tests, one per class in `src/`.
-- `tests/Functional/` — container-compilation smoke test, admin gateway configuration rendering test and
-  core refund transition test (see Testing & QA).
+- `tests/Functional/` — container-compilation smoke test, admin gateway configuration rendering test,
+  core refund transition test and sylius/refund-plugin integration test (see Testing & QA).
 - `tests/TestApplication/` — overlay for the shared `sylius/test-application` dev-dependency kernel
-  (`bundles.php`, `.env`, `.env.test`). Not a bespoke app.
+  (`bundles.php`, `.env`, `.env.test`; `refund_plugin/bundles.php` is the extra bundle list used only by
+  `RefundPluginIntegrationTest`). Not a bespoke app.
 - No `scripts/` directory exists — every command is a raw `composer`/`vendor/bin/*` invocation.
 
 ## Development Commands
@@ -181,6 +182,9 @@ per-command flag.
   `symfony/var-exporter: ^7.4` (newer 8.x renamed a method Doctrine ORM's proxy factory still expects) and
   `extra.symfony.require: ^7.4`. Don't casually bump these without checking `sylius/test-application`
   compatibility.
+- `comgate/sdk` floor is **`^1.9`**: 1.9 moved the SDK to Comgate's REST/JSON protocol (1.7/1.8 parse
+  form-encoded `code=0&message=OK` bodies). Every SDK response fixture in `tests/` is JSON, so lowering the
+  floor breaks the suite under `--prefer-lowest`.
 - `sylius/refund-plugin` is **require-dev + `suggest` only**: everything touching `Sylius\RefundPlugin\*`
   lives in `RefundPaymentGeneratedHandler` / `config/integrations/refund_plugin/` and is only loaded when the
   bundle is enabled. Never reference refund-plugin classes from always-loaded services.
@@ -225,6 +229,12 @@ per-command flag.
   Payum's Doctrine `StorageExtension` (persist + flush → needs a DB). Functional tests that go through a
   built gateway use a `PaymentInterface` mock as the model instead (see
   `ContainerCompilationTest::testTheComgateGatewayExecutesRefunds`).
+- **Refund plugin integration test** (`tests/Functional/RefundPluginIntegrationTest.php`) boots a second
+  kernel with sylius/refund-plugin enabled by overriding `$_SERVER` `TEST_APP_BUNDLES_PATH`,
+  `CONFIGS_TO_IMPORT` and `APP_CACHE_DIR` (own cache dir, otherwise the cached plain-test container is
+  reused) in `setUp()`, restored in `tearDown()`. It asserts Comgate methods are offered by the refund
+  plugin's own refund-method provider and that `RefundPaymentGenerated` on `sylius.event_bus` reaches the
+  gateway and completes the refund payment (repositories/Payum/applier replaced in the test container).
 - **Compiling the real Sylius container needs more than PHP's default 128M CLI `memory_limit`** — always
   run the full suite as `php -d memory_limit=-1 vendor/bin/phpunit`, or scope to
   `--testsuite "Unicorncrew Sylius Comgate Plugin - Unit"` if you don't need the container boot.

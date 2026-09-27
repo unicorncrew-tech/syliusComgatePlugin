@@ -150,7 +150,8 @@ configuration form type is wired, i.e. everything `bin/console debug:container` 
 for. It also renders the admin payment method form's gateway configuration section (create and update)
 through Sylius' Twig hooks and asserts the Merchant ID / Secret / Test mode fields and their validation
 errors show up, and applies Sylius' payment `refund` transition to check that it refunds at Comgate, or
-is aborted when Comgate refuses the refund.
+is aborted when Comgate refuses the refund. A second kernel with `sylius/refund-plugin` enabled checks
+that Comgate is offered as a refund method and that the plugin's refund payments are refunded at Comgate.
 
 ```shell
 composer install

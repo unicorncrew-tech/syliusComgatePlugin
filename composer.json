@@ -19,7 +19,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "comgate/sdk": "^1.7",
+        "comgate/sdk": "^1.9",
         "payum/core": "^1.7",
         "sylius/sylius": "^2.0",
         "symfony/config": "^6.4 || ^7.0",
