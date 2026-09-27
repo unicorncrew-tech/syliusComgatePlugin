@@ -108,7 +108,9 @@ framework needed); `tests/Functional` boots the real Sylius kernel — with this
 `tests/TestApplication/bundles.php` and `tests/TestApplication/.env` — and asserts the container actually
 compiles: the `comgate` Payum gateway factory is registered, its actions resolve, and the admin gateway
 configuration form type is wired, i.e. everything `bin/console debug:container` would otherwise be used
-for.
+for. It also renders the admin payment method form's gateway configuration section (create and update)
+through Sylius' Twig hooks and asserts the Merchant ID / Secret / Test mode fields and their validation
+errors show up.
 
 ```shell
 composer install

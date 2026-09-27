@@ -1,0 +1,12 @@
+sylius_twig_hooks:
+    hooks:
+        'sylius_admin.payment_method.create.content.form.sections.gateway_configuration.comgate':
+            merchant:
+                template: '@UnicorncrewSyliusComgatePlugin/admin/payment_method/form/sections/gateway_configuration/merchant.html.twig'
+                priority: -100
+            secret:
+                template: '@UnicorncrewSyliusComgatePlugin/admin/payment_method/form/sections/gateway_configuration/secret.html.twig'
+                priority: -200
+            test:
+                template: '@UnicorncrewSyliusComgatePlugin/admin/payment_method/form/sections/gateway_configuration/test.html.twig'
+                priority: -300
