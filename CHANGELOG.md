@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/unicorncrew-tech/syliusComgatePlugin/compare/v1.0.3...v1.1.0) (2026-09-27)
+
+
+### Features
+
+* add refund functionality ([#11](https://github.com/unicorncrew-tech/syliusComgatePlugin/issues/11)) ([2596a37](https://github.com/unicorncrew-tech/syliusComgatePlugin/commit/2596a37180d1545b8b044b4b5159cda88dd9141d))
+
 ## [1.0.3](https://github.com/unicorncrew-tech/syliusComgatePlugin/compare/v1.0.2...v1.0.3) (2026-09-27)
 
 
