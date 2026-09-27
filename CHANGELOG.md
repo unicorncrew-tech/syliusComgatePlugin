@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/unicorncrew-tech/syliusComgatePlugin/compare/v1.0.2...v1.0.3) (2026-09-27)
+
+
+### Bug Fixes
+
+* **admin:** render Comgate gateway configuration fields via Twig hooks ([#9](https://github.com/unicorncrew-tech/syliusComgatePlugin/issues/9)) ([d296763](https://github.com/unicorncrew-tech/syliusComgatePlugin/commit/d296763f2965b9c6557f1e2c68c5cebff1535857))
+
 ## [1.0.2](https://github.com/unicorncrew-tech/syliusComgatePlugin/compare/v1.0.1...v1.0.2) (2026-09-14)
 
 
