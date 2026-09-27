@@ -1,0 +1,16 @@
+services:
+    _defaults:
+        public: false
+        autowire: false
+        autoconfigure: false
+
+    unicorncrew_sylius_comgate.refund.refund_payment_generated_handler:
+        class: Unicorncrew\SyliusComgatePlugin\Refund\RefundPaymentGeneratedHandler
+        arguments:
+            - '@unicorncrew_sylius_comgate.refund.payment_refunder'
+            - '@sylius.repository.payment_method'
+            - '@sylius.repository.payment'
+            - '@sylius_refund.repository.refund_payment'
+            - '@sylius_refund.state_resolver.refund_payment_completed_applier'
+        tags:
+            - { name: messenger.message_handler, bus: sylius.event_bus }

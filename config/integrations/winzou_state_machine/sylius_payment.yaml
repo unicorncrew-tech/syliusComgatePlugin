@@ -1,0 +1,8 @@
+winzou_state_machine:
+    sylius_payment:
+        callbacks:
+            before:
+                unicorncrew_sylius_comgate_refund:
+                    on: ['refund']
+                    do: ['@unicorncrew_sylius_comgate.refund.refund_payment_listener', 'refund']
+                    args: ['object']

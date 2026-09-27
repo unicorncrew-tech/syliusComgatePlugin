@@ -11,10 +11,12 @@ use Unicorncrew\SyliusComgatePlugin\Api\ComgateApiInterface;
 
 final class ComgateGatewayFactory extends GatewayFactory
 {
+    public const FACTORY_NAME = 'comgate';
+
     protected function populateConfig(ArrayObject $config): void
     {
         $config->defaults([
-            'payum.factory_name' => 'comgate',
+            'payum.factory_name' => self::FACTORY_NAME,
             'payum.factory_title' => 'Comgate',
         ]);
 

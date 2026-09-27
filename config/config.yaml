@@ -1,5 +1,6 @@
 imports:
     - { resource: "@UnicorncrewSyliusComgatePlugin/config/app/twig_hooks/**/*.yaml" }
+    - { resource: "@UnicorncrewSyliusComgatePlugin/config/integrations/winzou_state_machine.php" }
 
 # Payments stay in the "processing" state between the redirect to Comgate and
 # the webhook/return confirming the final outcome; the checkout must still be

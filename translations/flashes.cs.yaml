@@ -1,0 +1,2 @@
+unicorncrew_sylius_comgate:
+    refund_failed: 'Comgate odmítl platbu vrátit, platba proto nebyla označena jako vrácená: %reason%'

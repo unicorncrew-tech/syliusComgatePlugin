@@ -1,0 +1,2 @@
+unicorncrew_sylius_comgate:
+    refund_failed: 'Comgate refused to refund the payment, it has not been marked as refunded: %reason%'
