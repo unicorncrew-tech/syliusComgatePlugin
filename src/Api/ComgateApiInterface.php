@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Unicorncrew\SyliusComgatePlugin\Api;
 
 use Comgate\SDK\Entity\Payment;
+use Comgate\SDK\Entity\Refund;
 use Comgate\SDK\Entity\Response\PaymentCreateResponse;
 use Comgate\SDK\Entity\Response\PaymentStatusResponse;
+use Comgate\SDK\Entity\Response\RefundResponse;
 
 interface ComgateApiInterface
 {
@@ -23,4 +25,12 @@ interface ComgateApiInterface
     public function createPayment(Payment $payment): PaymentCreateResponse;
 
     public function getStatus(string $transactionId): PaymentStatusResponse;
+
+    /**
+     * Refunds (fully or partially) an already paid Comgate transaction.
+     *
+     * Comgate refunds in the currency of the original transaction; the
+     * refunded amount is validated server-side against what is left to refund.
+     */
+    public function refundPayment(Refund $refund): RefundResponse;
 }

@@ -45,6 +45,8 @@ by the official `sylius/paypal-plugin` and `sylius/mollie-plugin`:
 - `StatusAction` maps the Comgate payment status onto Sylius' payment state machine. Sylius' own
   `UpdatePaymentStateExtension` (registered core-wide) takes care of applying the corresponding transition
   after every `Capture`/`Notify` call, so no extra listener is required.
+- `RefundAction` returns money of a paid payment through Comgate's refund API (full or partial). It is
+  triggered from the admin, see [Refunds](#refunds).
 
 ## Installation
 
@@ -100,6 +102,43 @@ Use `bin/console debug:router payum_notify_do_unsafe` to double check the exact 
 shop, and the payment method's `code` (as configured in step 3 above) as the `<payment method code>`
 segment.
 
+## Refunds
+
+Refunds are sent to Comgate's refund API from the Sylius admin. There are two ways to do it, depending on
+whether [`sylius/refund-plugin`](https://github.com/Sylius/RefundPlugin) is installed.
+
+### Full refund (Sylius core)
+
+On the order page (**Sales > Orders > order > Payments**), the **Refund** button of a completed Comgate
+payment refunds the whole payment amount at Comgate, then marks the payment as refunded.
+
+- If Comgate refuses the refund (e.g. the amount was already refunded, or the merchant balance is too
+  low), the payment stays **completed** and the admin sees an error flash with Comgate's reason. Sylius'
+  refund route always uses its "Payment has been successfully refunded." flash text, so that message also
+  shows up, in red.
+- A Comgate payment with no Comgate transaction (e.g. an admin completed it by hand) is only marked as
+  refunded. No refund is sent to Comgate, because there is no Comgate transaction to take the money from.
+
+This works with the Symfony Workflow state machine (the Sylius 2 default) and with
+`winzou_state_machine` if your app maps the `sylius_payment` graph to it.
+
+### Partial refunds (`sylius/refund-plugin`)
+
+With [`sylius/refund-plugin`](https://github.com/Sylius/RefundPlugin) installed and enabled, Sylius' core
+payment **Refund** button is hidden, and you refund from the order's **Refunds** page instead. There you pick
+any items and shipping costs to refund, including partial amounts. This plugin adds `comgate` to
+`sylius_refund.supported_gateways` for you, so Comgate payment methods show up as refund methods.
+
+When the refund method you pick is a Comgate one, the refunded amount goes to Comgate through the order's
+Comgate payment, and the refund payment is marked **completed** straight away. If Comgate refuses the
+refund, or the order was not paid through Comgate, the refund plugin rolls the whole refund back (no
+credit memo, no refund payment) and shows its generic error flash. The reason is in the application log.
+To refund an order without moving money through Comgate (e.g. by bank transfer), pick an `offline`
+refund method.
+
+Comgate always refunds in the currency of the original transaction. Test-mode gateways send test-mode
+refunds.
+
 ## Testing
 
 This plugin uses [`sylius/test-application`](https://github.com/Sylius/TestApplication) as a dev
@@ -110,7 +149,8 @@ compiles: the `comgate` Payum gateway factory is registered, its actions resolve
 configuration form type is wired, i.e. everything `bin/console debug:container` would otherwise be used
 for. It also renders the admin payment method form's gateway configuration section (create and update)
 through Sylius' Twig hooks and asserts the Merchant ID / Secret / Test mode fields and their validation
-errors show up.
+errors show up, and applies Sylius' payment `refund` transition to check that it refunds at Comgate, or
+is aborted when Comgate refuses the refund.
 
 ```shell
 composer install

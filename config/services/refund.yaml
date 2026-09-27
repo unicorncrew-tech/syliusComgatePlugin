@@ -1,0 +1,20 @@
+services:
+    _defaults:
+        public: false
+        autowire: false
+        autoconfigure: false
+
+    unicorncrew_sylius_comgate.refund.payment_refunder:
+        class: Unicorncrew\SyliusComgatePlugin\Refund\ComgatePaymentRefunder
+        arguments:
+            - '@payum'
+
+    # Public: also called as a winzou_state_machine callback (config/integrations/winzou_state_machine).
+    unicorncrew_sylius_comgate.refund.refund_payment_listener:
+        class: Unicorncrew\SyliusComgatePlugin\Refund\RefundPaymentListener
+        public: true
+        arguments:
+            - '@unicorncrew_sylius_comgate.refund.payment_refunder'
+            - '@request_stack'
+        tags:
+            - { name: kernel.event_listener, event: workflow.sylius_payment.transition.refund }

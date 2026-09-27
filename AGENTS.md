@@ -19,18 +19,32 @@ Sylius Capture/Notify controllers (Payum bundle, vendor)
         │
         ▼
 ComgateGatewayFactory (src/Payum/ComgateGatewayFactory.php)
-  registers: payum.api closure (→ ComgateApi) + 4 tagged actions
+  registers: payum.api closure (→ ComgateApi) + 5 tagged actions
         │
         ├─ ConvertPaymentAction   Payment → array details, seeds status=NEW (once, before first Capture)
         ├─ CaptureAction          creates payment at Comgate, throws HttpRedirect to send shopper offsite;
         │                         on return, re-polls status instead of trusting the browser
         ├─ StatusAction           maps details['status'] (ComgateStatus::*) → Payum's canonical
         │                         GetStatusInterface mark*() calls → drives Sylius' payment state machine
-        └─ NotifyAction           webhook handler (payum_notify_do_unsafe/{gateway}); looks up Payment by
-                                  refId, re-fetches status from Comgate (never trusts the webhook body)
+        ├─ NotifyAction           webhook handler (payum_notify_do_unsafe/{gateway}); looks up Payment by
+        │                         refId, re-fetches status from Comgate (never trusts the webhook body)
+        └─ RefundAction           Payum\Request\RefundPayment (Payment + amount) → Comgate refund API
         │
         ▼
 Api\ComgateApi (thin wrapper around vendor comgate/sdk Client)
+```
+
+Admin refunds reach `RefundAction` through `Refund\ComgatePaymentRefunder` (resolves the payment's own
+gateway from the `payum` registry and executes `RefundPayment`):
+
+```
+Sylius core payment "Refund" button ─► sylius_payment `refund` transition
+        └─ Refund\RefundPaymentListener   full amount; runs before the transition, Comgate failure →
+                                          UpdateHandlingException (transition aborted) + own error flash
+sylius/refund-plugin (optional) ─► RefundPaymentGenerated event (sylius.event_bus, inside RefundUnits tx)
+        └─ Refund\RefundPaymentGeneratedHandler   only when the refund method is Comgate; refunds the
+                                          order's completed payment, then completes the RefundPayment;
+                                          throwing rolls the whole refund back
 ```
 
 The shared state store across every action is `Payment::$details` (an array persisted by Payum): keys
@@ -46,17 +60,30 @@ admin Twig templates/hooks that render that form type.
   `Client`). This is the only place that talks to Comgate over HTTP.
 - `src/Payum/` — `ComgateGatewayFactory` (gateway bootstrap/config validation) and `ComgateStatus`
   (string-constant bag re-exporting `Comgate\SDK\Entity\Codes\PaymentStatusCode`, plus a synthetic `NEW`).
-- `src/Payum/Action/` — the four `ActionInterface` implementations described above. Each has a matching
+- `src/Payum/Action/` — the five `ActionInterface` implementations described above. Each has a matching
   `supports()` guard and starts `execute()` with `RequestNotSupportedException::assertSupports($this, $request)`.
+- `src/Payum/Request/` — `RefundPayment`, a Payum `Refund` request that also carries the amount (Payum's
+  own request has none; Comgate supports partial refunds).
+- `src/Refund/` — admin refund entry points: `ComgatePaymentRefunder` (shared "is this a refundable
+  Comgate payment" check + gateway dispatch), `RefundPaymentListener` (core `sylius_payment` refund
+  transition, Symfony Workflow listener *and* winzou callback) and `RefundPaymentGeneratedHandler`
+  (sylius/refund-plugin integration).
 - `src/Form/Type/` — `ComgateGatewayConfigurationType`, the admin "gateway configuration" form
   (merchant/secret/test) shown when a payment method's gateway is set to `comgate`.
 - `src/DependencyInjection/` — `UnicorncrewSyliusComgateExtension` (alias `unicorncrew_sylius_comgate`),
-  loads `config/services.yaml`. No `Configuration` class — there are no bundle-level config keys.
-- `config/services/` — `payum.yaml` (gateway factory builder + 4 tagged actions, manual wiring,
-  `autowire: false` except `NotifyAction`) and `form.yaml` (form type, standard `autowire: true`).
+  loads `config/services.yaml`, plus `config/integrations/refund_plugin/services.yaml` only when
+  `SyliusRefundPlugin` is in `kernel.bundles`. `Compiler\RegisterRefundPluginGatewayPass` appends `comgate`
+  to `sylius_refund.supported_gateways` when that parameter exists. No `Configuration` class — there are
+  no bundle-level config keys.
+- `config/services/` — `payum.yaml` (gateway factory builder + 5 tagged actions, manual wiring,
+  `autowire: false` except `NotifyAction`), `refund.yaml` (refunder + core refund transition listener,
+  manual wiring) and `form.yaml` (form type, standard `autowire: true`).
+- `config/integrations/` — optional-dependency wiring: `refund_plugin/services.yaml` (loaded by the
+  extension, see above) and `winzou_state_machine.php` (imported by `config/config.yaml`; loads the
+  `sylius_payment` refund callback only when `winzouStateMachineBundle` is enabled).
 - `config/config.yaml` — **consumer-app-facing** config (imported by host apps, not just this plugin):
-  imports `config/app/twig_hooks/**/*.yaml`, whitelists `processing` as an allowed checkout payment state
-  and adds an isolated `comgate` Monolog channel/handler.
+  imports `config/app/twig_hooks/**/*.yaml` and `config/integrations/winzou_state_machine.php`, whitelists
+  `processing` as an allowed checkout payment state and adds an isolated `comgate` Monolog channel/handler.
 - `config/app/twig_hooks/admin/payment_method/{create,update}.yaml` — `sylius_twig_hooks` hookables on
   `sylius_admin.payment_method.{create,update}.content.form.sections.gateway_configuration.comgate` (the
   hook Sylius dispatches per `gatewayConfig.factoryName`). Without them the config fields are never
@@ -64,10 +91,11 @@ admin Twig templates/hooks that render that form type.
 - `templates/` — Twig namespace `@UnicorncrewSyliusComgatePlugin`;
   `admin/payment_method/form/sections/gateway_configuration/{merchant,secret,test}.html.twig` render
   `hookable_metadata.context.form.gatewayConfig.config.*` (pattern copied from `sylius/paypal-plugin`).
-- `translations/` — `messages.{en,cs}.yaml` for the gateway label + form field labels.
+- `translations/` — `messages.{en,cs}.yaml` for the gateway label + form field labels, `flashes.{en,cs}.yaml`
+  for the refund failure flash.
 - `tests/Unit/` — framework-free PHPUnit tests, one per class in `src/`.
-- `tests/Functional/` — container-compilation smoke test + admin gateway configuration rendering test
-  (see Testing & QA).
+- `tests/Functional/` — container-compilation smoke test, admin gateway configuration rendering test and
+  core refund transition test (see Testing & QA).
 - `tests/TestApplication/` — overlay for the shared `sylius/test-application` dev-dependency kernel
   (`bundles.php`, `.env`, `.env.test`). Not a bespoke app.
 - No `scripts/` directory exists — every command is a raw `composer`/`vendor/bin/*` invocation.
@@ -107,6 +135,10 @@ per-command flag.
   - `NotifyAction` uses **silent early-return** (no exception, no logging) for malformed/unrecognized
     webhook payloads — webhook callers can't be trusted and there's no way to surface an error back to
     Comgate anyway.
+  - Refunds must **abort the state change they back** rather than record money that never moved:
+    `RefundPaymentListener` rethrows Comgate SDK errors (`ApiException`, SDK `RuntimeException`) as Sylius'
+    `UpdateHandlingException` (the resource controller then skips the transition); `RefundPaymentGeneratedHandler`
+    lets them (and its `Webmozart\Assert` guards) propagate so the refund plugin's command transaction rolls back.
 - **Never trust callback payloads.** Both `CaptureAction` (on return) and `NotifyAction` (webhook)
   re-fetch status via `ComgateApiInterface::getStatus()` instead of reading the browser query string or
   webhook body's own status field.
@@ -149,6 +181,9 @@ per-command flag.
   `symfony/var-exporter: ^7.4` (newer 8.x renamed a method Doctrine ORM's proxy factory still expects) and
   `extra.symfony.require: ^7.4`. Don't casually bump these without checking `sylius/test-application`
   compatibility.
+- `sylius/refund-plugin` is **require-dev + `suggest` only**: everything touching `Sylius\RefundPlugin\*`
+  lives in `RefundPaymentGeneratedHandler` / `config/integrations/refund_plugin/` and is only loaded when the
+  bundle is enabled. Never reference refund-plugin classes from always-loaded services.
 - Default branch is **`master`** (not `main`) — both CI workflows trigger on pushes to `master`.
 - Commit messages MUST follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, `test:`,
   `ci:`, `refactor:`, `style:`, `feat!:`/`BREAKING CHANGE:` footer for majors) — this is what drives
@@ -182,6 +217,14 @@ per-command flag.
   channels/locales), then renders Sylius' own `@SyliusAdmin/.../gateway_configuration.html.twig` with a
   hand-built `HookableMetadata` (prefix `sylius_admin.payment_method.{create,update}.content.form.sections`)
   and the admin form theme, and asserts the Comgate inputs, prefilled values and field-level errors.
+- **Refund transition test** (`tests/Functional/PaymentRefundTransitionTest.php`) applies the real
+  `sylius_payment` `refund` transition through `sylius_abstraction.state_machine` on in-memory entities,
+  with only the `payum` registry replaced in the test container, and asserts the refund reaches the
+  gateway / a Comgate failure keeps the payment `completed`.
+- Executing a request through a **real** Payum gateway with a Sylius `Payment` *entity* as model triggers
+  Payum's Doctrine `StorageExtension` (persist + flush → needs a DB). Functional tests that go through a
+  built gateway use a `PaymentInterface` mock as the model instead (see
+  `ContainerCompilationTest::testTheComgateGatewayExecutesRefunds`).
 - **Compiling the real Sylius container needs more than PHP's default 128M CLI `memory_limit`** — always
   run the full suite as `php -d memory_limit=-1 vendor/bin/phpunit`, or scope to
   `--testsuite "Unicorncrew Sylius Comgate Plugin - Unit"` if you don't need the container boot.

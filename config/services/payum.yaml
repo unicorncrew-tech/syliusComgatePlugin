@@ -31,3 +31,8 @@ services:
         autowire: true
         tags:
             - { name: payum.action, factory: comgate, alias: unicorncrew_sylius_comgate.notify }
+
+    unicorncrew_sylius_comgate.payum.action.refund:
+        class: Unicorncrew\SyliusComgatePlugin\Payum\Action\RefundAction
+        tags:
+            - { name: payum.action, factory: comgate, alias: unicorncrew_sylius_comgate.refund }

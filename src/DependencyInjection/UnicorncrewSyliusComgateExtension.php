@@ -20,5 +20,11 @@ final class UnicorncrewSyliusComgateExtension extends Extension
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
         $loader->load('services.yaml');
+
+        /** @var array<string, class-string> $bundles */
+        $bundles = $container->getParameter('kernel.bundles');
+        if (isset($bundles['SyliusRefundPlugin'])) {
+            $loader->load('integrations/refund_plugin/services.yaml');
+        }
     }
 }

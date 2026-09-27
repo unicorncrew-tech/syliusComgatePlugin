@@ -7,8 +7,10 @@ namespace Unicorncrew\SyliusComgatePlugin\Api;
 use Comgate\SDK\Client;
 use Comgate\SDK\Comgate;
 use Comgate\SDK\Entity\Payment;
+use Comgate\SDK\Entity\Refund;
 use Comgate\SDK\Entity\Response\PaymentCreateResponse;
 use Comgate\SDK\Entity\Response\PaymentStatusResponse;
+use Comgate\SDK\Entity\Response\RefundResponse;
 use Webmozart\Assert\Assert;
 
 final class ComgateApi implements ComgateApiInterface
@@ -46,5 +48,10 @@ final class ComgateApi implements ComgateApiInterface
     public function getStatus(string $transactionId): PaymentStatusResponse
     {
         return $this->client->getStatus($transactionId);
+    }
+
+    public function refundPayment(Refund $refund): RefundResponse
+    {
+        return $this->client->refundPayment($refund);
     }
 }
