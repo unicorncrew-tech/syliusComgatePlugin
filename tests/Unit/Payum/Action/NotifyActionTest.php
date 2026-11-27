@@ -58,6 +58,85 @@ final class NotifyActionTest extends TestCase
         self::assertSame($payment, $request->getFirstModel());
     }
 
+    public function testItReadsTheJsonBodyOfAVersionTwoStatusPush(): void
+    {
+        $payment = new Payment();
+        $payment->setDetails(['status' => ComgateStatus::PENDING, 'trans_id' => 'XXXX-YYYY-ZZZZ']);
+
+        $paymentRepository = $this->createMock(PaymentRepositoryInterface::class);
+        $paymentRepository->expects(self::once())->method('find')->with(42)->willReturn($payment);
+
+        $api = $this->createMock(ComgateApiInterface::class);
+        $api->expects(self::once())
+            ->method('getStatus')
+            ->with('XXXX-YYYY-ZZZZ')
+            ->willReturn(new PaymentStatusResponse(new Response(new Psr7Response(200, [], json_encode([
+                'code' => 0,
+                'message' => 'OK',
+                'transId' => 'XXXX-YYYY-ZZZZ',
+                'status' => ComgateStatus::PAID,
+            ], \JSON_THROW_ON_ERROR)))))
+        ;
+
+        $action = new NotifyAction($paymentRepository);
+        $action->setApi($api);
+        $action->setGateway($this->createNotifyWebhookGateway([], json_encode([
+            'merchant' => '123456',
+            'test' => 'false',
+            'price' => '10000',
+            'curr' => 'CZK',
+            'refId' => '42',
+            'transId' => 'XXXX-YYYY-ZZZZ',
+            'status' => ComgateStatus::PAID,
+            'payerAcc' => null,
+        ], \JSON_THROW_ON_ERROR)));
+
+        $request = new Notify(null);
+        $action->execute($request);
+
+        self::assertSame(ComgateStatus::PAID, $payment->getDetails()['status']);
+        self::assertSame($payment, $request->getFirstModel());
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function malformedJsonBodyProvider(): iterable
+    {
+        yield 'non-string transaction id' => ['{"refId":"42","transId":123}'];
+        yield 'invalid json' => ['{"refId":"42",'];
+        yield 'json scalar' => ['"42"'];
+    }
+
+    /** @dataProvider malformedJsonBodyProvider */
+    public function testItIgnoresMalformedJsonBodies(string $content): void
+    {
+        $paymentRepository = $this->createMock(PaymentRepositoryInterface::class);
+        $paymentRepository->expects(self::never())->method('find');
+
+        $api = $this->createMock(ComgateApiInterface::class);
+        $api->expects(self::never())->method('getStatus');
+
+        $action = new NotifyAction($paymentRepository);
+        $action->setApi($api);
+        $action->setGateway($this->createNotifyWebhookGateway([], $content));
+
+        $action->execute(new Notify(null));
+    }
+
+    public function testItIgnoresIdentifiersPassedInTheQueryString(): void
+    {
+        $paymentRepository = $this->createMock(PaymentRepositoryInterface::class);
+        $paymentRepository->expects(self::never())->method('find');
+
+        $api = $this->createMock(ComgateApiInterface::class);
+        $api->expects(self::never())->method('getStatus');
+
+        $action = new NotifyAction($paymentRepository);
+        $action->setApi($api);
+        $action->setGateway($this->createNotifyWebhookGateway([], '', ['refId' => '42', 'transId' => 'XXXX-YYYY-ZZZZ']));
+
+        $action->execute(new Notify(null));
+    }
+
     public function testItIgnoresNotificationsMissingTheReferenceOrTransactionId(): void
     {
         $paymentRepository = $this->createMock(PaymentRepositoryInterface::class);
@@ -129,20 +208,27 @@ final class NotifyActionTest extends TestCase
         self::assertSame(ComgateStatus::NEW, $payment->getDetails()['status']);
     }
 
-    /** @param array<string, string> $requestParams */
-    private function createNotifyWebhookGateway(array $requestParams): Gateway
+    /**
+     * @param array<string, string> $requestParams
+     * @param array<string, string> $queryParams
+     */
+    private function createNotifyWebhookGateway(array $requestParams, string $content = '', array $queryParams = []): Gateway
     {
         $gateway = new Gateway();
-        $gateway->addAction(new class($requestParams) implements \Payum\Core\Action\ActionInterface {
-            public function __construct(private readonly array $params)
-            {
+        $gateway->addAction(new class($requestParams, $content, $queryParams) implements \Payum\Core\Action\ActionInterface {
+            public function __construct(
+                private readonly array $params,
+                private readonly string $content,
+                private readonly array $queryParams,
+            ) {
             }
 
             /** @param GetHttpRequest $request */
             public function execute($request): void
             {
-                $request->query = [];
+                $request->query = $this->queryParams;
                 $request->request = $this->params;
+                $request->content = $this->content;
                 $request->method = 'POST';
             }
 
