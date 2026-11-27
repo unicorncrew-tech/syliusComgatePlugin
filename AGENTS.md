@@ -26,8 +26,9 @@ ComgateGatewayFactory (src/Payum/ComgateGatewayFactory.php)
         │                         on return, re-polls status instead of trusting the browser
         ├─ StatusAction           maps details['status'] (ComgateStatus::*) → Payum's canonical
         │                         GetStatusInterface mark*() calls → drives Sylius' payment state machine
-        ├─ NotifyAction           webhook handler (payum_notify_do_unsafe/{gateway}); looks up Payment by
-        │                         refId, re-fetches status from Comgate (never trusts the webhook body)
+        ├─ NotifyAction           webhook handler (payum_notify_do_unsafe/{gateway}); reads the JSON or form
+        │                         body, looks up Payment by refId, re-fetches status from Comgate (never
+        │                         trusts the webhook body)
         └─ RefundAction           Payum\Request\RefundPayment (Payment + amount) → Comgate refund API
         │
         ▼
@@ -207,8 +208,8 @@ per-command flag.
 - Sylius entities (`Payment`/`Order`/`Customer`) have no public `id` setter — tests use
   `\ReflectionProperty` to force it (see `createPayment()` helper in `CaptureActionTest`).
 - Webhook simulation (`NotifyActionTest`) builds a real `Payum\Core\Gateway` with an inline anonymous
-  `ActionInterface` that intercepts `GetHttpRequest` and injects fixture query/request data — no HTTP
-  layer involved.
+  `ActionInterface` that intercepts `GetHttpRequest` and injects fixture form fields or a JSON body — no
+  HTTP layer involved.
 - **Functional test** (`tests/Functional/ContainerCompilationTest.php`, extends `KernelTestCase`) is a
   container-compilation smoke test standing in for `bin/console debug:container`: it boots the kernel
   provided by `sylius/test-application` (extended via `tests/TestApplication/bundles.php` +

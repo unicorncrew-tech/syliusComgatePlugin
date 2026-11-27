@@ -20,8 +20,8 @@ use Unicorncrew\SyliusComgatePlugin\Api\ComgateApiInterface;
  * Handles the server-to-server "STATUS URL" webhook Comgate is configured (in
  * their merchant portal) to call at `payum_notify_do_unsafe/{gateway}`.
  *
- * The webhook payload is never trusted directly: it only carries enough
- * information (refId + transId) to look the payment up, the authoritative
+ * The webhook payload (a JSON body or form fields) is never trusted directly:
+ * it only carries enough information (refId + transId) to look the payment up, the authoritative
  * status is always re-fetched through {@see ComgateApiInterface::getStatus()}.
  */
 final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayAwareInterface
@@ -43,10 +43,10 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
         $httpRequest = new GetHttpRequest();
         $this->gateway->execute($httpRequest);
 
-        $params = array_merge($httpRequest->query, $httpRequest->request);
+        $params = $this->getWebhookParams($httpRequest);
 
         $paymentId = $params['refId'] ?? null;
-        $transactionId = $params['transId'] ?? ($params['id'] ?? null);
+        $transactionId = $params['transId'] ?? null;
 
         if (!is_string($paymentId) || '' === $paymentId || !is_string($transactionId) || '' === $transactionId) {
             return;
@@ -84,5 +84,21 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
     public function supports($request): bool
     {
         return $request instanceof Notify;
+    }
+
+    /**
+     * Comgate's v2.0 status push is a JSON body; older merchant setups post form fields.
+     *
+     * @return array<mixed>
+     */
+    private function getWebhookParams(GetHttpRequest $httpRequest): array
+    {
+        if ([] !== $httpRequest->request) {
+            return $httpRequest->request;
+        }
+
+        $params = json_decode((string) $httpRequest->content, true);
+
+        return is_array($params) ? $params : [];
     }
 }

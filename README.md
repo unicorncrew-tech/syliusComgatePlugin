@@ -40,8 +40,8 @@ by the official `sylius/paypal-plugin` and `sylius/mollie-plugin`:
   the shopper is redirected back, it re-fetches the authoritative status straight from Comgate rather than
   trusting query parameters set by the browser.
 - `NotifyAction` handles the asynchronous webhook Comgate calls on `payum_notify_do_unsafe/{gateway}`. It
-  only uses the webhook payload to look the payment up (by `refId`/`transId`), the payment status itself is
-  always re-fetched through `Client::getStatus()`.
+  reads Comgate's v2.0 JSON push as well as form-encoded posts, but only to look the payment up (by
+  `refId`/`transId`). The payment status itself is always re-fetched through `Client::getStatus()`.
 - `StatusAction` maps the Comgate payment status onto Sylius' payment state machine. Sylius' own
   `UpdatePaymentStateExtension` (registered core-wide) takes care of applying the corresponding transition
   after every `Capture`/`Notify` call, so no extra listener is required.
